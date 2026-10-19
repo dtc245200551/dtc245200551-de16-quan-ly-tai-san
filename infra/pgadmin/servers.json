@@ -1,0 +1,1 @@
+{"Servers":{"1":{"Name":"Hải Asset PostgreSQL","Group":"Đề 16","Host":"postgres","Port":5432,"MaintenanceDB":"assets","Username":"asset_migrate","SSLMode":"prefer"}}}
