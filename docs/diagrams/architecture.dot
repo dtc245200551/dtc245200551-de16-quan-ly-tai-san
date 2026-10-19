@@ -1,0 +1,24 @@
+digraph deployment {
+  graph [rankdir=TB, bgcolor="white", pad=0.25, nodesep=0.55, ranksep=0.6, fontname="Arial", fontsize=17];
+  node [shape=box, style="rounded,filled", fillcolor="#eef4fc", color="#57779c", fontname="Arial", fontsize=17, margin="0.20,0.14", penwidth=1.4];
+  edge [fontname="Arial", fontsize=14, color="#486785", penwidth=1.4, arrowsize=0.8];
+  browser [label="Chrome trên Windows\nQuản trị viên", fillcolor="#e8edf3"];
+  subgraph cluster_wsl {
+    label="Ubuntu 24.04\nWSL2"; labeljust=l; color="#90a6c2"; style=rounded; margin=22;
+    subgraph cluster_engine {
+      label="Docker Engine\nDocker Compose"; labeljust=l; color="#b7c8dc"; style=rounded; margin=22;
+      nginx [label="Nginx\nReverse proxy và headers"];
+      app [label="Hải Asset\nNode.js 24 / Express 5 / EJS"];
+      pgadmin [label="pgAdmin\nCông cụ quản lý database"];
+      postgres [shape=cylinder, label="PostgreSQL 17\nDatabase assets", fillcolor="#e8f5ed"];
+      data [shape=folder, label="Volume postgres_data\nLưu bền vững", fillcolor="#fff5e4"];
+      {rank=same; nginx; pgadmin;}
+      nginx -> app [label="HTTP nội bộ :3000"];
+      app -> postgres [label="SQL :5432\nrole asset_app"];
+      pgadmin -> postgres [label="SQL :5432\nrole quản trị"];
+      postgres -> data [label="Đọc / ghi"];
+    }
+  }
+  browser -> nginx [label="HTTP localhost:8086"];
+  browser -> pgadmin [label="HTTP localhost:8087"];
+}

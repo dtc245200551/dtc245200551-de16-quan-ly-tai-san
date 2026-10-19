@@ -141,4 +141,11 @@ Giữ cửa sổ Ubuntu mở khi dùng lệnh Linux. Wrapper PowerShell `scripts
 - Thiếu log: tạo thao tác mới, xem khoảng thời gian, Promtail và quyền file; Nginx phải ghi file thường, không trỏ symlink stdout.
 - Không đổi secret PostgreSQL sau khi tạo volume vì mật khẩu role đã lưu trong database. Dừng bình thường không xóa dữ liệu.
 
-Mốc cuối bổ sung báo cáo Word, sơ đồ, ảnh minh chứng và kịch bản demo.
+## Tài liệu bàn giao
+
+- [Báo cáo Word 18 trang](docs/Bao_Cao_De16_Nguyen_Xuan_Hai.docx), giữ bố cục bốn chương của mẫu.
+- [Kịch bản demo từng bước](docs/Kich_Ban_Demo.md).
+- [Sơ đồ kiến trúc, ERD và luồng giám sát](docs/diagrams/README.md), có nguồn DOT, SVG và PNG.
+- [Ảnh minh chứng và kết quả kiểm tra](docs/evidence/README.md).
+
+Tái tạo báo cáo bằng Python 3: cài `pip install -r docs/requirements-report.txt`, sau đó chạy `python scripts/build-report.py` từ thư mục gốc. Builder dùng bản mẫu gốc `docs/report-template.docx` và ảnh trong `docs/`; không đọc secrets. Bản bàn giao đã được mở bằng Microsoft Word, xuất để kiểm tra đủ 18 trang và xem từng trang để rà bố cục. Mẫu gốc được giữ nguyên để đối chiếu.

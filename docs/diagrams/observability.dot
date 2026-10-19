@@ -1,0 +1,17 @@
+digraph observation {
+  graph [rankdir=TB, bgcolor="white", pad=0.25, nodesep=0.35, ranksep=0.55, fontname="Arial", fontsize=16];
+  node [shape=box, style="rounded,filled", fillcolor="#eef4fc", color="#57779c", fontname="Arial", fontsize=16, margin="0.18,0.14", penwidth=1.3];
+  edge [fontname="Arial", fontsize=13, color="#486785", penwidth=1.3, arrowsize=0.75];
+  grafana [label="Grafana\nlocalhost:3003", fillcolor="#fff0dc"];
+  prometheus [label="Prometheus\nlocalhost:9092", fillcolor="#e8f5ed"];
+  loki [label="Loki\nLưu và truy vấn log", fillcolor="#e8f5ed"];
+  targets [label="Metrics nội bộ\nApp / Nginx exporter\nPostgreSQL exporter / cAdvisor"];
+  promtail [label="Promtail\nThu log của riêng Đề 16"];
+  volumes [shape=folder, label="Volumes log\nỨng dụng / Nginx / PostgreSQL", fillcolor="#fff5e4"];
+  {rank=same; prometheus; loki;}
+  grafana -> prometheus [label="PromQL / HTTP"];
+  grafana -> loki [label="LogQL / HTTP"];
+  prometheus -> targets [label="Scrape mỗi 15 giây"];
+  promtail -> loki [label="HTTP push log"];
+  promtail -> volumes [label="Đọc file, mount chỉ đọc"];
+}

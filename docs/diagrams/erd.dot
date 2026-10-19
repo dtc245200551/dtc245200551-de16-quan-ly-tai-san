@@ -1,0 +1,13 @@
+digraph business_erd {
+  graph [rankdir=TB, bgcolor="white", pad=0.25, nodesep=0.7, ranksep=0.7, fontname="Arial", fontsize=17];
+  node [shape=record, style=filled, fillcolor="#f5f8fd", color="#5d7b9b", fontname="Arial", fontsize=17, margin="0.18,0.12", penwidth=1.4];
+  edge [fontname="Arial", fontsize=15, color="#486785", penwidth=1.4, dir=both];
+  categories [label="categories|PK id\lUQ name\l"];
+  locations [label="locations|PK id\lUQ name\l"];
+  assets [label="assets|PK id\lFK category_id NOT NULL\lFK location_id NOT NULL\lUQ code NOT NULL\lUQ serial NULL\lname, purchased_on\lvalue_vnd, status, notes\lversion, created_at\l", fillcolor="#eaf3ff"];
+  maintenance [label="maintenance|PK id\lFK asset_id NOT NULL\ltitle, scheduled_on, provider\lstatus, previous_status\lcost_vnd, result\lstarted_at, finished_at\lcreated_at\l", fillcolor="#e8f5ed"];
+  {rank=same; categories; locations;}
+  categories -> assets [arrowtail=tee, arrowhead=crow, taillabel="1", headlabel="0..*", label="Phân loại"];
+  locations -> assets [arrowtail=tee, arrowhead=crow, taillabel="1", headlabel="0..*", label="Đặt tại"];
+  assets -> maintenance [arrowtail=tee, arrowhead=crow, taillabel="1", headlabel="0..*", label="Có lịch sử bảo trì"];
+}
