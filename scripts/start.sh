@@ -6,4 +6,6 @@ docker info --format '{{.OperatingSystem}} | {{.ServerVersion}} | {{.CgroupVersi
 dc config --quiet
 dc build app
 dc up -d --wait --wait-timeout 300
+dc exec -T nginx nginx -t
+dc exec -T nginx nginx -s reload
 printf '%s\n' 'Website http://localhost:8086 | pgAdmin http://localhost:8087' 'Website user: admin. Password file: .local/secrets/admin_password'

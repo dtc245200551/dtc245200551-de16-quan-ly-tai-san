@@ -47,6 +47,8 @@ Mở Chrome Windows:
 |---|---|---|---|
 | Hải Asset | http://localhost:8086 | admin | `.local/secrets/admin_password` |
 | pgAdmin | http://localhost:8087 | admin@hai.edu.vn | `.local/secrets/pgadmin_password` |
+| Grafana | http://localhost:3003 | admin | `.local/secrets/grafana_password` |
+| Prometheus | http://localhost:9092 | Không yêu cầu | Chỉ mở localhost |
 
 pgAdmin có sẵn server `postgres:5432`, database `assets`, role `asset_migrate`; mật khẩu kết nối trong `.local/secrets/db_migrate_password`. Role này dùng cho quản trị/migration trong demo, app sử dụng `asset_app` với quyền hạn chế hơn.
 
@@ -77,4 +79,14 @@ HTTP localhost là cấu hình demo; khi triển khai Internet cần HTTPS và `
 
 `app/`: ứng dụng, schema, giao diện. `infra/`: cấu hình PostgreSQL, pgAdmin, Nginx. `scripts/`: vận hành Linux và wrapper Windows. `.local/`: secret, kết quả chạy và backup, được Git bỏ qua.
 
-Các mốc tiếp theo bổ sung Prometheus/Grafana, Loki/Promtail, gia cố/sao lưu/kiểm thử và báo cáo minh chứng.
+## Giám sát
+
+Prometheus `/targets` có 5 jobs: chính Prometheus, app, Nginx, PostgreSQL và cAdvisor. Grafana tự nạp dashboard **Hải Asset | Thiết bị và vận hành** trong thư mục **Đề 16 Nguyễn Xuân Hải**, gồm 15 panel theo dõi container, HTTP, DB và trạng thái tài sản. Cần ít nhất hai lần scrape để biểu đồ rate có dữ liệu.
+
+```sh
+docker compose -f compose.yaml -f compose.monitoring.yaml exec -T app node < scripts/check-monitoring.js
+```
+
+Kiểm tra xác nhận target UP, exporter kết nối, RAM thực của app/nginx/postgres có đúng nhãn project và gauge đọc được tài sản từ DB. Chi tiết tại `observability/README.md`. cAdvisor là ngoại lệ: chạy privileged và đọc host cgroup/Docker qua các mount chỉ đọc. Cảnh báo hiện xem tại Prometheus, chưa gửi ra email.
+
+Các mốc tiếp theo bổ sung Loki/Promtail, gia cố/sao lưu/kiểm thử và báo cáo minh chứng.

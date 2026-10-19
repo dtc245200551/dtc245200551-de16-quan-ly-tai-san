@@ -9,6 +9,7 @@ const path=require('node:path');
 const {pool,secret}=require('./db');
 const {verifyPassword,hashPassword,csrf}=require('./security');
 const d=require('./domain');
+const metrics=require('./metrics');
 const app=express();
 app.disable('x-powered-by');
 app.set('trust proxy',1);
@@ -25,9 +26,10 @@ app.use((req,res,next)=>{
   res.on('finish',()=>{log('http_request',{request_id:req.id,method:req.method,path:req.path,status:res.statusCode,duration_ms:Math.round(performance.now()-begin)});});
   next();
 });
+app.use(metrics.observe);
+app.get('/metrics',async(req,res)=>{res.set('Content-Type',metrics.registry.contentType);res.end(await metrics.registry.metrics());});
 app.get('/healthz',(req,res)=>res.json({status:'ok'}));
 app.get('/readyz',async(req,res)=>{try{await pool.query('SELECT 1');res.json({status:'ready'});}catch{res.status(503).json({status:'unavailable'});}});
-// Instrumentation is added at the monitoring milestone, before the session layer.
 app.use(express.static(path.join(__dirname,'../public'),{maxAge:'1h',index:false}));
 app.use(express.urlencoded({extended:false,limit:'24kb',parameterLimit:30}));
 app.use(session({store:new PgStore({pool,tableName:'sessions',createTableIfMissing:false}),
@@ -143,6 +145,7 @@ app.get('/maintenance',async(req,res)=>{
 app.post('/maintenance',async(req,res)=>{const id=await d.schedule(req.body);log('maintenance_scheduled',{maintenance_id:id,request_id:req.id});flash(req,'Đã tạo lịch bảo trì.');res.redirect(303,'/maintenance');});
 app.post('/maintenance/:id/:action',async(req,res)=>{
   const result=await d.transition(req.params.id,req.params.action,req.body);
+  metrics.maintenanceActions.inc({action:result.action});
   const event={start:'maintenance_started',complete:'maintenance_completed',cancel:'maintenance_cancelled'}[req.params.action];
   log(event,{maintenance_id:Number(req.params.id),asset_id:result.assetId,request_id:req.id});
   flash(req,'Đã cập nhật phiếu bảo trì.');res.redirect(303,'/maintenance');

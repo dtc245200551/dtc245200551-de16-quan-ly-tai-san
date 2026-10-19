@@ -1,0 +1,9 @@
+apiVersion: 1
+providers:
+  - name: Hai Asset
+    orgId: 1
+    folder: Đề 16 Nguyễn Xuân Hải
+    type: file
+    disableDeletion: true
+    updateIntervalSeconds: 15
+    options: {path: /var/lib/grafana/dashboards}
