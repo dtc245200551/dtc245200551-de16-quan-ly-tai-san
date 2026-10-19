@@ -15,16 +15,19 @@ services:
   storage-init:
     image: alpine:3.23.3
     user: "0:0"
-    command: [sh, -ec, "mkdir -p /logs/app /logs/nginx; chown 1000:1000 /logs/app; chown 101:101 /logs/nginx; chmod 755 /logs/app /logs/nginx"]
+    command: [sh, -ec, "mkdir -p /logs/app /logs/nginx /logs/postgres; for f in /logs/nginx/access.log /logs/nginx/error.log; do if [ -L \"$$f\" ]; then unlink \"$$f\"; fi; touch \"$$f\"; done; chown 1000:1000 /logs/app; chown 101:101 /logs/nginx /logs/nginx/*.log; chown 999:999 /logs/postgres; chmod 755 /logs/app /logs/nginx /logs/postgres; chmod 644 /logs/nginx/*.log"]
     network_mode: none
-    volumes: [app_logs:/logs/app, nginx_logs:/logs/nginx]
+    volumes: [app_logs:/logs/app, nginx_logs:/logs/nginx, postgres_logs:/logs/postgres]
     cap_drop: [ALL]
-    cap_add: [CHOWN, FOWNER]
+    cap_add: [CHOWN, FOWNER, DAC_OVERRIDE]
     security_opt: [no-new-privileges:true]
     logging: *log
   postgres:
     image: postgres:17.11-bookworm
     restart: unless-stopped
+    command: [postgres, -c, logging_collector=on, -c, log_destination=jsonlog, -c, log_directory=/var/log/postgresql, -c, log_filename=postgresql-%Y-%m-%d.log, -c, log_file_mode=0644, -c, log_rotation_age=1d, -c, log_rotation_size=10MB, -c, log_statement=none, -c, log_min_error_statement=panic, -c, timezone=Asia/Ho_Chi_Minh, -c, log_timezone=Asia/Ho_Chi_Minh]
+    depends_on:
+      storage-init: {condition: service_completed_successfully}
     environment:
       POSTGRES_USER: asset_owner
       POSTGRES_DB: assets
@@ -33,6 +36,7 @@ services:
     secrets: [db_owner_password, db_app_password, db_migrate_password, db_exporter_password]
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - postgres_logs:/var/log/postgresql
       - ./infra/postgres/init.sh:/docker-entrypoint-initdb.d/10-roles.sh:ro
     networks: [database]
     healthcheck:
@@ -143,6 +147,7 @@ volumes:
   pgadmin_data: {}
   app_logs: {}
   nginx_logs: {}
+  postgres_logs: {}
 secrets:
   db_owner_password: {file: ./.local/secrets/db_owner_password}
   db_app_password: {file: ./.local/secrets/db_app_password}

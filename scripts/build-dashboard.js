@@ -27,5 +27,14 @@ panel('Giao dịch PostgreSQL / giây','timeseries',16,28,8,7,'ops',[['rate(pg_s
 panel('Thiết bị theo trạng thái','timeseries',0,35,12,7,'short',[['hai_assets_by_status','{{status}}']]);
 panel('Thao tác bảo trì thành công từ lúc app chạy','timeseries',12,35,12,7,'short',[['sum by (action)(hai_maintenance_actions_total) or vector(0)','{{action}}']]);
 const dashboard={uid:'hai-assets',title:'Hải Asset | Thiết bị và vận hành',schemaVersion:41,version:1,editable:false,tags:['de16','hai','wsl2'],timezone:'Asia/Ho_Chi_Minh',refresh:'15s',time:{from:'now-30m',to:'now'},panels,annotations:{list:[]},links:[]};
+for(const [index,title,expr] of [
+  [0,'HTTP lỗi từ Nginx','{job="nginx", project="de16hai"} | json | status >= 400'],
+  [1,'Vòng đời bảo trì','{job="app", project="de16hai"} | json | event=~"maintenance_(scheduled|started|completed|cancelled)"'],
+  [2,'Cảnh báo và lỗi ứng dụng','{job="app", project="de16hai"} | json | level=~"warn|error"']
+]){
+  const datasource={type:'loki',uid:'hai-loki'};
+  panels.push({id:16+index,title,type:'logs',gridPos:{x:index===2?0:index*12,y:index===2?50:42,w:index===2?24:12,h:8},datasource,
+    targets:[{refId:'A',expr,datasource}],options:{showTime:true,showLabels:false,wrapLogMessage:true,prettifyLogMessage:true,sortOrder:'Descending',enableLogDetails:true},fieldConfig:{defaults:{},overrides:[]}});
+}
 const dir=path.resolve(__dirname,'../observability/grafana/dashboards');fs.mkdirSync(dir,{recursive:true});fs.writeFileSync(path.join(dir,'hai-assets.json'),JSON.stringify(dashboard,null,2)+'\n');
 console.log(`Generated ${panels.length} monitoring panels.`);

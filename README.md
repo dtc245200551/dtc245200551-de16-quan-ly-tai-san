@@ -81,7 +81,7 @@ HTTP localhost là cấu hình demo; khi triển khai Internet cần HTTPS và `
 
 ## Giám sát
 
-Prometheus `/targets` có 5 jobs: chính Prometheus, app, Nginx, PostgreSQL và cAdvisor. Grafana tự nạp dashboard **Hải Asset | Thiết bị và vận hành** trong thư mục **Đề 16 Nguyễn Xuân Hải**, gồm 15 panel theo dõi container, HTTP, DB và trạng thái tài sản. Cần ít nhất hai lần scrape để biểu đồ rate có dữ liệu.
+Prometheus `/targets` có 5 jobs: chính Prometheus, app, Nginx, PostgreSQL và cAdvisor. Grafana tự nạp dashboard **Hải Asset | Thiết bị và vận hành** trong thư mục **Đề 16 Nguyễn Xuân Hải**, gồm 18 panel theo dõi container, HTTP, DB và trạng thái tài sản. Cần ít nhất hai lần scrape để biểu đồ rate có dữ liệu.
 
 ```sh
 docker compose -f compose.yaml -f compose.monitoring.yaml exec -T app node < scripts/check-monitoring.js
@@ -89,4 +89,14 @@ docker compose -f compose.yaml -f compose.monitoring.yaml exec -T app node < scr
 
 Kiểm tra xác nhận target UP, exporter kết nối, RAM thực của app/nginx/postgres có đúng nhãn project và gauge đọc được tài sản từ DB. Chi tiết tại `observability/README.md`. cAdvisor là ngoại lệ: chạy privileged và đọc host cgroup/Docker qua các mount chỉ đọc. Cảnh báo hiện xem tại Prometheus, chưa gửi ra email.
 
-Các mốc tiếp theo bổ sung Loki/Promtail, gia cố/sao lưu/kiểm thử và báo cáo minh chứng.
+## Log tập trung
+
+Loki + Promtail đọc log JSON app, access log Nginx và JSON log PostgreSQL từ các volume riêng. Grafana có datasource Loki và 3 panel log bổ sung. Xem ba truy vấn đã kiểm chứng ở `observability/logql.md`.
+
+```sh
+docker compose -f compose.yaml -f compose.monitoring.yaml -f compose.logging.yaml exec -T app node < scripts/check-logs.js
+```
+
+Cần tạo sự kiện bảo trì và thử dữ liệu không hợp lệ trước khi kiểm tra. Logrotate xoay file 5 MB, giữ 3 bản; Loki giữ 7 ngày. Promtail mount chỉ đọc log volume, có volume lưu vị trí đọc; không mount Docker socket. Công cụ đã EOL 02/03/2026, được giữ theo đề; hướng thay thế Grafana Alloy được ghi trong báo cáo.
+
+Các mốc tiếp theo hoàn thiện hardening, sao lưu/kiểm thử và báo cáo minh chứng.

@@ -857,6 +857,117 @@
           "range": true
         }
       ]
+    },
+    {
+      "id": 16,
+      "title": "HTTP lỗi từ Nginx",
+      "type": "logs",
+      "gridPos": {
+        "x": 0,
+        "y": 42,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "hai-loki"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "{job=\"nginx\", project=\"de16hai\"} | json | status >= 400",
+          "datasource": {
+            "type": "loki",
+            "uid": "hai-loki"
+          }
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": true,
+        "sortOrder": "Descending",
+        "enableLogDetails": true
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      }
+    },
+    {
+      "id": 17,
+      "title": "Vòng đời bảo trì",
+      "type": "logs",
+      "gridPos": {
+        "x": 12,
+        "y": 42,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "hai-loki"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "{job=\"app\", project=\"de16hai\"} | json | event=~\"maintenance_(scheduled|started|completed|cancelled)\"",
+          "datasource": {
+            "type": "loki",
+            "uid": "hai-loki"
+          }
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": true,
+        "sortOrder": "Descending",
+        "enableLogDetails": true
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      }
+    },
+    {
+      "id": 18,
+      "title": "Cảnh báo và lỗi ứng dụng",
+      "type": "logs",
+      "gridPos": {
+        "x": 0,
+        "y": 50,
+        "w": 24,
+        "h": 8
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "hai-loki"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "{job=\"app\", project=\"de16hai\"} | json | level=~\"warn|error\"",
+          "datasource": {
+            "type": "loki",
+            "uid": "hai-loki"
+          }
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": true,
+        "sortOrder": "Descending",
+        "enableLogDetails": true
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      }
     }
   ],
   "annotations": {

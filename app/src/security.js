@@ -17,7 +17,7 @@ function csrf(req, res, next) {
   req.session.csrf ||= crypto.randomBytes(24).toString('hex');
   res.locals.csrf = req.session.csrf;
   if (req.method === 'POST') {
-    const input = Buffer.from(String(req.body._csrf || ''));
+    const input = Buffer.from(String(req.body?._csrf || ''));
     const expected = Buffer.from(req.session.csrf);
     if (input.length !== expected.length || !crypto.timingSafeEqual(input, expected)) {
       return res.status(403).render('error', { title: 'Phiên biểu mẫu không hợp lệ', message: 'Vui lòng tải lại trang và thử lại.' });

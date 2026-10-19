@@ -4,7 +4,7 @@ set -eu
 sh scripts/prepare.sh
 docker info --format '{{.OperatingSystem}} | {{.ServerVersion}} | {{.CgroupVersion}}'
 dc config --quiet
-dc build app
+dc build
 dc up -d --wait --wait-timeout 300
 dc exec -T nginx nginx -t
 dc exec -T nginx nginx -s reload
