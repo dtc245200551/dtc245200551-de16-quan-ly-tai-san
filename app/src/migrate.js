@@ -29,8 +29,7 @@ async function main() {
         SELECT a.id,$2::varchar,CURRENT_DATE + $3::integer,'Tổ kỹ thuật ICTU' FROM assets a WHERE a.code=$1
         AND NOT EXISTS(SELECT 1 FROM maintenance m WHERE m.asset_id=a.id AND m.title=$2)`,[code,title,offset]);
     }
-    await c.query(`GRANT USAGE ON SCHEMA public TO asset_app;
-      GRANT SELECT ON admins,categories,locations,assets,maintenance TO asset_app;
+    await c.query(`GRANT SELECT ON admins,categories,locations,assets,maintenance TO asset_app;
       GRANT UPDATE(password_hash,auth_version) ON admins TO asset_app;
       GRANT INSERT,UPDATE,DELETE ON sessions TO asset_app; GRANT SELECT ON sessions TO asset_app;
       GRANT INSERT,UPDATE ON categories,locations,assets,maintenance TO asset_app;

@@ -8,7 +8,8 @@ CREATE ROLE asset_app LOGIN PASSWORD :'app_pass';
 CREATE ROLE asset_migrate LOGIN PASSWORD :'migrate_pass';
 CREATE ROLE asset_exporter LOGIN PASSWORD :'exporter_pass';
 GRANT CONNECT ON DATABASE assets TO asset_app,asset_migrate,asset_exporter;
-REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+REVOKE ALL ON SCHEMA public FROM PUBLIC;
+GRANT USAGE ON SCHEMA public TO asset_app,asset_exporter;
 GRANT USAGE,CREATE ON SCHEMA public TO asset_migrate;
 GRANT pg_monitor TO asset_exporter;
 SQL

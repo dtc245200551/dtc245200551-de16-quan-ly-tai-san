@@ -99,4 +99,46 @@ docker compose -f compose.yaml -f compose.monitoring.yaml -f compose.logging.yam
 
 Cần tạo sự kiện bảo trì và thử dữ liệu không hợp lệ trước khi kiểm tra. Logrotate xoay file 5 MB, giữ 3 bản; Loki giữ 7 ngày. Promtail mount chỉ đọc log volume, có volume lưu vị trí đọc; không mount Docker socket. Công cụ đã EOL 02/03/2026, được giữ theo đề; hướng thay thế Grafana Alloy được ghi trong báo cáo.
 
-Các mốc tiếp theo hoàn thiện hardening, sao lưu/kiểm thử và báo cáo minh chứng.
+## Kiểm thử và gia cố
+
+```sh
+sh scripts/test.sh
+python3 scripts/check-hardening.py
+```
+
+Bộ kiểm thử gồm 25 trường hợp qua HTTP thật và PostgreSQL: xác thực/CSRF, CRUD danh mục và vị trí, mã/serial trùng, ngày/tiền sai, chống mất cập nhật, tìm kiếm tham số hóa, bắt đầu bảo trì đồng thời, hoàn tất/hủy, ngừng sử dụng, headers/cookie, quyền DB và vô hiệu hóa phiên khi đổi mật khẩu. Dữ liệu QA có tiền tố riêng, được dọn sau mỗi lần chạy; mật khẩu admin chính không đổi. Kết quả lưu tại `.local/test-results/`.
+
+App/Nginx dùng non-root, root filesystem chỉ đọc, bỏ capabilities và no-new-privileges. Container có giới hạn RAM/PID. Schema public chỉ cấp quyền cho role cần thiết; migration sở hữu các bảng, app không được xóa hồ sơ hoặc tạo bảng, exporter chỉ có pg_monitor. Secrets nằm ngoài Git, mật khẩu được băm bằng scrypt; form có CSRF và giới hạn đăng nhập 15 lần/15 phút theo IP qua Nginx. Không log mật khẩu, body hoặc cookie.
+
+Ngoại lệ cần hiểu: storage init dùng root và CHOWN/FOWNER/DAC_OVERRIDE để chuẩn bị volume; logrotate dùng quyền hẹp trên ba volume log; PostgreSQL bootstrap bắt đầu root rồi chuyển postgres; cAdvisor privileged và có Docker socket nên là thành phần quản trị được tin cậy. Cấu hình demo chưa phải dịch vụ Internet có HTTPS.
+
+## Sao lưu và phục hồi
+
+```sh
+sh scripts/backup.sh
+sh scripts/restore.sh --verify-current .local/backups/<ten-tep>.dump
+sh scripts/restore.sh --verify .local/backups/<ban-cu>.dump
+```
+
+Backup là archive PostgreSQL dạng custom và SHA-256, giữ schema, dữ liệu, ownership và ACL. File chứa tài khoản/phiên nên được tạo với quyền 0600 trong thư mục riêng. `--verify` phục hồi vào database tạm rồi tự dọn; `--verify-current` yêu cầu dữ liệu nghiệp vụ khớp database hiện tại, phù hợp để kiểm chứng bản vừa sao lưu khi không có người đang sửa dữ liệu.
+
+Chỉ khi cần thay dữ liệu hiện có:
+
+```sh
+sh scripts/restore.sh --apply .local/backups/<ten-tep>.dump
+```
+
+Lệnh kiểm tra archive ở database tạm trước, yêu cầu nhập `PHUC HOI HAI`, dừng app/Nginx rồi phục hồi cả quyền và dữ liệu. Nếu lỗi, ứng dụng giữ trạng thái dừng để kiểm tra. Mật khẩu tài khoản theo bản sao lưu; các file mật khẩu khởi tạo không tự viết lại. Bài đã kiểm chứng phục hồi ở DB tạm và đối chiếu 12 thiết bị/3 phiếu cùng nội dung dữ liệu; không phục hồi đè database demo.
+
+## WSL2 và xử lý lỗi
+
+Giữ cửa sổ Ubuntu mở khi dùng lệnh Linux. Wrapper PowerShell `scripts/start.ps1` tạo một tiến trình WSL ẩn để giữ distro hoạt động; `scripts/stop.ps1` chỉ dừng tiến trình do wrapper ghi nhận và giữ các volume. Daemon do systemd quản lý. Không shutdown toàn bộ WSL để dừng bài.
+
+- Không kết nối daemon: trong PowerShell chạy `wsl -d Ubuntu-24.04 -u root -- systemctl start docker`, sau đó kiểm tra `DOCKER_HOST` trỏ socket Ubuntu.
+- Xem dịch vụ/log với `docker compose -f compose.yaml -f compose.monitoring.yaml -f compose.logging.yaml ps -a` và `logs --tail 50 <service>`.
+- pgAdmin dùng tài khoản `admin@hai.edu.vn`; mật khẩu kết nối PostgreSQL khác mật khẩu đăng nhập pgAdmin.
+- Thiếu biểu đồ rate: chờ hai chu kỳ scrape rồi kiểm tra target và đúng nhãn project; không chỉ nhìn UP.
+- Thiếu log: tạo thao tác mới, xem khoảng thời gian, Promtail và quyền file; Nginx phải ghi file thường, không trỏ symlink stdout.
+- Không đổi secret PostgreSQL sau khi tạo volume vì mật khẩu role đã lưu trong database. Dừng bình thường không xóa dữ liệu.
+
+Mốc cuối bổ sung báo cáo Word, sơ đồ, ảnh minh chứng và kịch bản demo.

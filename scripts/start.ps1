@@ -1,6 +1,17 @@
 param([switch]$BaseOnly)
 $ErrorActionPreference = 'Stop'
 $linuxProject = '/home/hai/projects/de16-quan-ly-tai-san'
+$pidFile = Join-Path (Split-Path $PSScriptRoot -Parent) '.local/wsl-keepalive.pid'
+$keepAliveProcess = $null
+if (Test-Path -LiteralPath $pidFile) {
+    $savedPid = [int](Get-Content -LiteralPath $pidFile -Raw)
+    $keepAliveProcess = Get-CimInstance Win32_Process -Filter "ProcessId=$savedPid" | Where-Object { $_.Name -eq 'wsl.exe' -and $_.CommandLine -like '*de16-quan-ly-tai-san*sleep*infinity*' }
+}
+if (-not $keepAliveProcess) {
+    $keepAliveProcess = Start-Process -FilePath 'wsl.exe' -ArgumentList @('-d','Ubuntu-24.04','-u','hai','--cd',$linuxProject,'--','sleep','infinity') -WindowStyle Hidden -PassThru
+    New-Item -ItemType Directory -Force (Split-Path $pidFile -Parent) | Out-Null
+    [IO.File]::WriteAllText($pidFile, [string]$keepAliveProcess.Id)
+}
 if ($BaseOnly) {
     wsl -d Ubuntu-24.04 -u hai --cd $linuxProject -- env BASE_ONLY=1 sh scripts/start.sh
 } else {

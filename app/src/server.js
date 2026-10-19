@@ -4,22 +4,17 @@ const session=require('express-session');
 const PgStore=require('connect-pg-simple')(session);
 const {rateLimit}=require('express-rate-limit');
 const crypto=require('node:crypto');
-const fs=require('node:fs');
 const path=require('node:path');
 const {pool,secret}=require('./db');
 const {verifyPassword,hashPassword,csrf}=require('./security');
 const d=require('./domain');
 const metrics=require('./metrics');
+const log=require('./logger');
 const app=express();
 app.disable('x-powered-by');
 app.set('trust proxy',1);
 app.set('view engine','ejs');
 app.set('views',path.join(__dirname,'../views'));
-function log(event,fields={}) {
-  const line=JSON.stringify({time:new Date().toISOString(),level:fields.level||'info',event,...fields})+'\n';
-  process.stdout.write(line);
-  try { fs.appendFileSync('/var/log/app/events.log',line); } catch(e) { process.stderr.write('Log file unavailable\n'); }
-}
 app.use((req,res,next)=>{
   req.id=crypto.randomUUID();res.setHeader('X-Request-ID',req.id);
   const begin=performance.now();

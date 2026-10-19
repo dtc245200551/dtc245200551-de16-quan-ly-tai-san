@@ -47,6 +47,7 @@ services:
       start_period: 30s
     security_opt: [no-new-privileges:true]
     mem_limit: 512m
+    pids_limit: 200
     logging: *log
   migrate:
     image: de16hai-app:1.0.0
@@ -66,6 +67,8 @@ services:
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
     logging: *log
+    mem_limit: 256m
+    pids_limit: 60
   app:
     build: ./app
     image: de16hai-app:1.0.0
@@ -88,6 +91,7 @@ services:
       timeout: 5s
       retries: 6
     mem_limit: 256m
+    pids_limit: 100
     logging: *log
   nginx:
     image: nginxinc/nginx-unprivileged:1.28.2-alpine
@@ -110,6 +114,7 @@ services:
       timeout: 5s
       retries: 6
     mem_limit: 128m
+    pids_limit: 80
     logging: *log
   pgadmin:
     image: dpage/pgadmin4:9.15
@@ -119,6 +124,7 @@ services:
       PGADMIN_DEFAULT_PASSWORD_FILE: /run/secrets/pgadmin_password
       PGADMIN_CONFIG_SERVER_MODE: "True"
       PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+      PGADMIN_CONFIG_UPGRADE_CHECK_ENABLED: "False"
     ports: ["127.0.0.1:${PGADMIN_PORT:-8087}:80"]
     secrets: [pgadmin_password]
     volumes:
@@ -129,12 +135,33 @@ services:
       postgres: {condition: service_healthy}
     security_opt: [no-new-privileges:true]
     mem_limit: 384m
+    pids_limit: 150
     healthcheck:
       test: [CMD, /venv/bin/python3, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:80/misc/ping',timeout=4).read()"]
       interval: 15s
       timeout: 5s
       retries: 8
       start_period: 30s
+    logging: *log
+  tests:
+    profiles: [test]
+    image: de16hai-app:1.0.0
+    command: [node, --test, --test-reporter=tap, --test-concurrency=1, test/integration.test.js, test/validation.test.js]
+    environment:
+      <<: *env
+      BASE_URL: http://nginx:8080
+      DB_USER: asset_migrate
+      DB_PASSWORD_FILE: /run/secrets/db_migrate_password
+    secrets: [db_migrate_password]
+    depends_on:
+      nginx: {condition: service_healthy}
+    networks: [frontend, database, monitoring]
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 256m
+    pids_limit: 80
     logging: *log
 networks:
   frontend: {internal: true}
